@@ -2,9 +2,10 @@ import os
 import json
 from pathlib import Path
 from datetime import datetime
-from langchain.schema import Document
+
 import streamlit as st
 from rapidfuzz import fuzz
+
 from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
@@ -16,20 +17,15 @@ from langchain.memory import ConversationBufferMemory
 # === CONFIGURATION ===
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or "YOUR-OPENAI-API-KEY-HERE"
 BASE_DIR = Path(__file__).parent
-CHROMA_FOLDER = BASE_DIR / "chroma_store"
 JSONL_FOLDER = BASE_DIR / "JSONL_data"
-
-# Ensure folders exist
-CHROMA_FOLDER.mkdir(exist_ok=True)
-
 
 # === STREAMLIT PAGE SETUP ===
 st.set_page_config(page_title="JYSK Compliance Chat", layout="wide")
 st.title("🤖 JYSK Compliance Chat")
 
-# === SESSION-STATE INITIALIZATION ===
+# === SESSION STATE INITIALIZATION ===
 if "log_path" not in st.session_state:
-    LOG_DIR = Path(__file__).parent / "Chat log"
+    LOG_DIR = BASE_DIR / "Chat log"
     LOG_DIR.mkdir(exist_ok=True)
     date_str = datetime.now().strftime("%d%m%y")
     existing = sorted(LOG_DIR.glob(f"Chat_log_{date_str}_*.txt"))
@@ -37,12 +33,9 @@ if "log_path" not in st.session_state:
     st.session_state.log_path = LOG_DIR / f"Chat_log_{date_str}_{seq:02d}.txt"
 
 if "chat_history" not in st.session_state:
-    # UI history for display
     st.session_state.chat_history = []  # list of tuples (sender, text)
 
 # === VECTORSTORE & LLM INITIALIZATION ===
-from langchain.schema import Document  # make sure this is imported
-
 # 1) Embedding model
 embedding_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
@@ -53,20 +46,22 @@ for jsonl_file in JSONL_FOLDER.glob("*.jsonl"):
         for line in f:
             data = json.loads(line)
             docs.append(Document(
-                page_content=data["content"],
+                page_content=data.get("content", ""),
                 metadata={
                     "source": data.get("source", "?"),
                     "page": data.get("page", "?"),
                     "type": data.get("type", "unknown"),
                 },
             ))
+if not docs:
+    st.error(f"No JSONL files found in {JSONL_FOLDER}. Please commit your JSONL_data folder.")
+    st.stop()
 
-# 3) Build FAISS vectorstore in memory
+# 3) Build FAISS vectorstore (in-memory)
 vectorstore = FAISS.from_documents(docs, embedding_model)
 
 # 4) Initialize the LLM
 llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=OPENAI_API_KEY)
-
 
 # === SYSTEM PROMPT WITH AGE-CASE ENUMERATION & FOLLOW-UP ===
 system_prompt = """
@@ -94,13 +89,11 @@ qa_prompt = PromptTemplate(
 
 # === PERSISTED MEMORY & QA CHAIN ===
 if "qa_chain" not in st.session_state:
-    # Create a persistent memory buffer
     st.session_state.memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True,
         output_key="answer"
     )
-    # Build the chain once, reusing memory each run
     st.session_state.qa_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vectorstore.as_retriever(search_kwargs={"k": 80}),
@@ -147,14 +140,13 @@ def process_input():
         else:
             bot_reply = f"No matches found for rawdata on '{kw}'."
     else:
-        # 3) Invoke the persisted chain (which has memory)
         raw = st.session_state.qa_chain.invoke({"question": user_input})
         bot_reply = raw["answer"]
 
-    # 4) Save the UI history
+    # 3) Save the UI history
     st.session_state.chat_history.append(("Bot", bot_reply))
 
-    # 5) Append to your session log
+    # 4) Append to your session log
     with open(st.session_state.log_path, "a", encoding="utf-8") as log_f:
         log_f.write(f"QUESTION:\n{user_input}\n\nANSWER:\n{bot_reply}\n\n")
         if not user_input.lower().startswith("rawdata on "):
@@ -162,19 +154,18 @@ def process_input():
             for doc in raw.get("source_documents", []):
                 text = doc.page_content.replace("\n", " ").lower()
                 for sent in text.split("."):
-                    if sent and fuzz.partial_ratio(sent.strip(), bot_reply.lower()) >= 80:
+                    if fuzz.partial_ratio(sent.strip(), bot_reply.lower()) >= 80:
                         m = doc.metadata
-                        used.add((m.get("source","?"), m.get("page","?")))
+                        used.add((m.get("source", "?"), m.get("page", "?")))
                         break
             for src, pg in used:
                 log_f.write(f"SOURCE: {src} (page {pg})\n")
         log_f.write("\n" + "="*80 + "\n")
 
-    # 6) Clear the input box
+    # 5) Clear the input box
     st.session_state.query_input = ""
 
 # === DISPLAY CHAT HISTORY ===
-# Chronological: oldest at top, newest right above input
 for sender, msg in st.session_state.chat_history:
     prefix = "You:" if sender == "You" else "Bot:"
     st.markdown(f"**{prefix}** {msg}")
