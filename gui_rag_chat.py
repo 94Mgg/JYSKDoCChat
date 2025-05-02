@@ -62,13 +62,19 @@ if not docs:
 # 3) Build or Load FAISS index
 try:
     if FAISS_STORE.exists():
-        vectorstore = FAISS.load_local(str(FAISS_STORE), embedding_model)
+        # NOTE the extra flag here
+        vectorstore = FAISS.load_local(
+            directory=str(FAISS_STORE),
+            embeddings=embedding_model,
+            allow_dangerous_deserialization=True
+        )
     else:
         vectorstore = FAISS.from_documents(docs, embedding_model)
         vectorstore.save_local(str(FAISS_STORE))
 except Exception as e:
     st.error(f"Error building/loading vectorstore: {e}")
     st.stop()
+
 
 # 4) Initialize the LLM
 llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=OPENAI_API_KEY)
