@@ -6,8 +6,8 @@ aiohttp>=3.8.5
 numpy>=1.24
 typing-extensions>=4.5.0
 tiktoken
-"unstructured[local-inference,pdf]"
-"pandas" "beautifulsoup4" "lxml"
+unstructured[local-inference,pdf]
+pandas beautifulsoup4 lxml
 openai faiss-cpu langchain
 tabulate
 langchain
