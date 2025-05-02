@@ -2,10 +2,8 @@ import os
 import json
 from pathlib import Path
 from datetime import datetime
-
 import streamlit as st
 from rapidfuzz import fuzz
-from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -15,10 +13,13 @@ from langchain.memory import ConversationBufferMemory
 
 # === CONFIGURATION ===
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or "YOUR-OPENAI-API-KEY-HERE"
-CHROMA_FOLDER = Path("chroma_store")
-JSONL_FOLDER = Path(__file__).parent / "JSONL_data"
-)
+BASE_DIR = Path(__file__).parent
+CHROMA_FOLDER = BASE_DIR / "chroma_store"
+JSONL_FOLDER = BASE_DIR / "JSONL_data"
+
+# Ensure folders exist
 CHROMA_FOLDER.mkdir(exist_ok=True)
+
 
 # === STREAMLIT PAGE SETUP ===
 st.set_page_config(page_title="JYSK Compliance Chat", layout="wide")
