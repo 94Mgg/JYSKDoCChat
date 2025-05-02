@@ -62,10 +62,10 @@ if not docs:
 # 3) Build or Load FAISS index
 try:
     if FAISS_STORE.exists():
-        # NOTE the extra flag here
+        # load_local signature: (folder_path, embeddings, allow_dangerous_deserialization)
         vectorstore = FAISS.load_local(
-            directory=str(FAISS_STORE),
-            embeddings=embedding_model,
+            str(FAISS_STORE),
+            embedding_model,
             allow_dangerous_deserialization=True
         )
     else:
@@ -74,6 +74,7 @@ try:
 except Exception as e:
     st.error(f"Error building/loading vectorstore: {e}")
     st.stop()
+
 
 
 # 4) Initialize the LLM
