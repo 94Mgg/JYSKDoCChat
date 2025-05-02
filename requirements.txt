@@ -16,4 +16,3 @@ tiktoken
 tqdm>=4.66.1
 typing-extensions>=4.5.0
 unstructured[local-inference,pdf]
-```
