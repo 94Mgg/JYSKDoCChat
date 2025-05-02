@@ -95,7 +95,9 @@ When answering:
    - Point out what was missing.
 6. If helpful, suggest a clearer or more effective way to phrase the question — based on how the JYSK documents are written and structured.
 7. If the answer still cannot be found in the context, perform a raw‑data fuzzy keyword search across the JSONL.
-8. After your direct answer, provide 5 additional relevant facts you find in other retrieved chunks about the same topic - unless your answer is refering to earlier answer.
+8. After your direct answer, provide 5 additional relevant facts you find in other retrieved chunks about the same topic.
+9. Finally, ask the user what aspect they’d like to explore in more detail (e.g. “Which age group would you like to focus on next?”).
+
 
 Always be factual and structured.
 """
