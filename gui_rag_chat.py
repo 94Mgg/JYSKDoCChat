@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 import streamlit as st
 from rapidfuzz import fuzz
+from langchain.schema import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
@@ -40,10 +41,10 @@ if "chat_history" not in st.session_state:
 
 # === VECTORSTORE & LLM INITIALIZATION ===
 
-# 1) Embedding model (same as before)
+# 1) Embedding model
 embedding_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
 
-# 2) Load JSONL chunks into Document objects
+# 2) Load all JSONL chunks into Document objects
 docs = []
 for jsonl_file in JSONL_FOLDER.glob("*.jsonl"):
     with open(jsonl_file, "r", encoding="utf-8") as f:
@@ -60,10 +61,10 @@ for jsonl_file in JSONL_FOLDER.glob("*.jsonl"):
                 )
             )
 
-# 3) Build FAISS vectorstore (in‑memory)
+# 3) Build FAISS vectorstore in memory
 vectorstore = FAISS.from_documents(docs, embedding_model)
 
-# 4) Initialize the LLM (same as before)
+# 4) Initialize the LLM
 llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=OPENAI_API_KEY)
 
 # === SYSTEM PROMPT WITH AGE-CASE ENUMERATION & FOLLOW-UP ===
