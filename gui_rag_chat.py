@@ -16,8 +16,7 @@ from langchain.memory import ConversationBufferMemory
 # === CONFIGURATION ===
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or "YOUR-OPENAI-API-KEY-HERE"
 CHROMA_FOLDER = Path("chroma_store")
-JSONL_FOLDER = Path(
-    r"C:/Users/MickiGrunzig/OneDrive - Zolo International Trading/Dokumenter/RAG model - JYSK V2_24.04/JSONL_data"
+JSONL_FOLDER = Path(__file__).parent / "JSONL_data"
 )
 CHROMA_FOLDER.mkdir(exist_ok=True)
 
