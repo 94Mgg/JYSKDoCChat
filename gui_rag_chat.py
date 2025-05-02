@@ -39,35 +39,13 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []  # list of tuples (sender, text)
 
 # === VECTORSTORE & LLM INITIALIZATION ===
-# (we rebuild the FAISS index from JSONL on each run to avoid SQLite issues)
-
-# 1) Embedding model
+# (these can be re-created each run since the store is persisted on disk)
 embedding_model = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
-
-# 2) Load all JSONL chunks into Document objects
-docs = []
-for jsonl_file in JSONL_FOLDER.glob("*.jsonl"):
-    with open(jsonl_file, "r", encoding="utf-8") as f:
-        for line in f:
-            data = json.loads(line)
-            docs.append(
-                Document(
-                    page_content=data["content"],
-                    metadata={
-                        "source": data.get("source", "?"),
-                        "page": data.get("page", "?"),
-                        "type": data.get("type", "unknown"),
-                    },
-                )
-            )
-
-# 3) Build FAISS vectorstore in memory
-vectorstore = FAISS.from_documents(docs, embedding_model)
-
-# 4) Initialize the LLM
-from langchain.chat_models import ChatOpenAI
+vectorstore = Chroma(
+    persist_directory=str(CHROMA_FOLDER),
+    embedding_function=embedding_model
+)
 llm = ChatOpenAI(model="gpt-4", temperature=0, openai_api_key=OPENAI_API_KEY)
-
 
 # === SYSTEM PROMPT WITH AGE-CASE ENUMERATION & FOLLOW-UP ===
 system_prompt = """
