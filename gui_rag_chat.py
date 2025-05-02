@@ -90,6 +90,7 @@ When answering:
 2.a. If the requirement varies by a user attribute (e.g. age, region, category, sex, weight, size), **enumerate all applicable cases**, clearly labeling each (for example “Under 3 years…”, “3–14 years…”, “14+ years…”).
 3. Understand that terms such as "upload", "submission", and "registration" may not all appear in the documents, but they can represent the same process. Treat them as synonyms unless the context clearly distinguishes between them.
 4. If a related process is described, reason logically based on the context and explain your conclusion.
+4a. Always state your source and page no in the end in "( )"
 5. If no direct or indirect answer is available:
    - List what you looked for.
    - Point out what was missing.
